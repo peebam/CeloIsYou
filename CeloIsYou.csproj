@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <MonoGamePlatform>DesktopGL</MonoGamePlatform>
+    <AssemblyName>CeloIsYou</AssemblyName>
+    <RootNamespace>CeloIsYou</RootNamespace>
+    <Version>0.0.1</Version>
+    <PackageLicenseExpression>Free</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <MonoGameContentReference Include="**\*.mgcb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.0.9" />
+    <PackageReference Include="MonoGame.Framework.Content.Pipeline" Version="3.8.0.1641" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.1" />
+  </ItemGroup>
+
+</Project>
