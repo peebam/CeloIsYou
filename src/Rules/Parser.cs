@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CeloIsYou.Commands;
 using CeloIsYou.Enumerations;
 using CeloIsYou.Extensions;
@@ -18,9 +19,10 @@ namespace CeloIsYou.Rules
 
         private static readonly Dictionary<EntityTypes, Action<Entity>> _actions = new()
         {
+            [EntityTypes.ActionKill] = (e => e.IsKilling = true),
             [EntityTypes.ActionPush] = (e => e.IsPushable = true),
-            [EntityTypes.ActionYou] = (e => e.IsControlled = true),
             [EntityTypes.ActionStop] = (e => e.IsStoping = true),
+            [EntityTypes.ActionYou] = (e => e.IsControlled = true),
         };
 
         private static readonly Dictionary<EntityTypes, EntityTypes> _types = new()
@@ -30,25 +32,23 @@ namespace CeloIsYou.Rules
             [EntityTypes.NatureWall] = EntityTypes.ObjectWall,
         };
 
-        public List<ICommand> Commands { get; private set; }
-        public List<Rule> Rules { get; private set; }
-
         public Parser()
         {
-            Commands = new List<ICommand>();
-            Rules = new List<Rule>();
         }
 
-        public void Process(IEnumerable<Expression> expressions, IEnumerable<Entity> entities)
+        public Result Process(IEnumerable<Expression> expressions, IEnumerable<Entity> entities, Grid grid)
         {
-            Commands.Clear();
-            Rules.Clear();
+            
+            var commands = new List<ICommand>();
+            var rules = new List<Rule>();
 
             foreach (var expression in expressions)
-                ProcessCore(expression, entities);
+                ProcessCore(expression, entities, grid, commands, rules);
+
+            return new Result(commands, rules);
         }
 
-        private void ProcessCore(Expression expression, IEnumerable<Entity> entities)
+        private void ProcessCore(Expression expression, IEnumerable<Entity> entities, Grid grid, List<ICommand> commands, List<Rule> rules)
         {
             if (!_predicates.TryGetValue(expression.Subject, out var predicate))
                 return;
@@ -56,19 +56,23 @@ namespace CeloIsYou.Rules
             if (_actions.TryGetValue(expression.Object, out var action))
             {
                 var rule = new Rule(predicate, action);
-                Rules.Add(rule);
+                rules.Add(rule);
                 return;
             }
-
+            
             if (_types.TryGetValue(expression.Object, out var type))
             {
+                entities = entities.Where(e => predicate(e));
                 foreach (var entity in entities)
                 {
-                    if (!predicate(entity))
-                        continue;
 
-                    var command = new ChangeTypeCommand(entity, type);
-                    Commands.Add(command);
+                    var coordinates = grid.GetCoordinates(entity);
+                    var commandExit = new ExitGameCommand(entity, coordinates);
+                    commands.Add(commandExit);
+
+                    var newEntity = new Entity(type);
+                    var commandEnter = new EnterGameCommand(newEntity, coordinates);
+                    commands.Add(commandEnter);
                 }
             }
         }

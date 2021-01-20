@@ -15,7 +15,7 @@ namespace CeloIsYou
         public Configuration()
         {
             GameSpeed = 0.15;
-            RenderFactor = 1.7;
+            RenderFactor = 2;
         }
     }
 }

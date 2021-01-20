@@ -8,15 +8,32 @@ namespace CeloIsYou
 {
     public class Pipeline
     {
-        public IEnumerable<CeloIsYou.Core.IDrawable> Drawables => _drawables;
-        private readonly List<CeloIsYou.Core.IDrawable> _drawables;
+        public IEnumerable<Core.IDrawable> Drawables => _drawables;
+        private readonly List<Core.IDrawable> _drawables;
 
-        public Pipeline()
+        private readonly SpriteBatch _spriteBatch;
+
+        public Pipeline(SpriteBatch spriteBatch)
         {
-            _drawables = new List<CeloIsYou.Core.IDrawable>();
+            _drawables = new List<Core.IDrawable>();
+            _spriteBatch = spriteBatch;
         }
 
-        public void Subscribe(CeloIsYou.Core.IDrawable drawable)
+        private void Update(GameTime gameTime)
+        {
+            foreach (var drawable in _drawables)
+                drawable.Update(gameTime);
+        }
+
+        public void Draw(GameTime gameTime)
+        {
+            Update(gameTime);
+            var drawables = Drawables.OrderBy(d => d.DrawOrder);
+            foreach (var drawable in drawables)
+                _spriteBatch.Draw(drawable.Texture, drawable.Position, Color.White);
+        }
+
+        public void Subscribe(Core.IDrawable drawable)
         {
             if (drawable == null)
                 throw new ArgumentNullException(nameof(drawable));
@@ -24,13 +41,7 @@ namespace CeloIsYou
             _drawables.Add(drawable);
         }
 
-        public void Update(GameTime gameTime)
-        {
-            foreach (var drawable in _drawables)
-                drawable.Update(gameTime);
-        }
-
-        public void Unsubscribe(CeloIsYou.Core.IDrawable drawable)
+        public void Unsubscribe(Core.IDrawable drawable)
         {
             if (drawable == null)
                 throw new ArgumentNullException(nameof(drawable));

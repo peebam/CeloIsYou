@@ -2,9 +2,10 @@ namespace CeloIsYou.Enumerations
 {
     public enum EntityTypes
     {
+        ActionKill,
         ActionPush,
-        ActionYou,
         ActionStop,
+        ActionYou,
 
         ObjectBox,
         ObjectCelo,

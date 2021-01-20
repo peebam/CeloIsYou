@@ -6,17 +6,21 @@ using CeloIsYou.Core;
 
 namespace CeloIsYou
 {
-    public class Entity : CeloIsYou.Core.IDrawable
+    public class Entity : Core.IDrawable
     {
         private static readonly Vector2 NoPosition = new(-1, -1);
 
         private IAnimation _animation;
 
         public bool IsControlled { get; set; }
+        public bool IsKilling { get; set; } = true;
         public bool IsPushable { get; set; }
         public bool IsStoping { get; set; }
 
         public int DrawOrder { get; set; }
+
+
+        public Coordinates Coordinates { get; private set; }
         public Vector2 Position { get; private set; }
         public Texture2D Texture { get; private set; }
         public EntityTypes Type { get; set; }
@@ -37,11 +41,6 @@ namespace CeloIsYou
             IsPushable = false;
             IsControlled = false;
         }
-        public void SetPosition(Vector2 position)
-        {
-            _animation = null;
-            Position = position;
-        }
 
         public void SetPosition(Vector2 position, GameTime gameTime)
         {
@@ -50,7 +49,7 @@ namespace CeloIsYou
                 Position = position;
                 return;
             }
-            _animation = new PositionAnimation(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => this.Position = pa.CurrentPosition);
+            _animation = new PositionAnimation(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
         }
 
         public void SetTexture(Texture2D texture)

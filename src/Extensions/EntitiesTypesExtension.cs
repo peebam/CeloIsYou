@@ -8,10 +8,10 @@ namespace CeloIsYou.Extensions
         public static string ToContentName(this EntityTypes type)
             => type switch
             {
-
-                EntityTypes.ActionYou => "Actions/you",
+                EntityTypes.ActionKill => "Actions/kill",
                 EntityTypes.ActionPush => "Actions/push",
                 EntityTypes.ActionStop => "Actions/stop",
+                EntityTypes.ActionYou => "Actions/you",
 
                 EntityTypes.ObjectBox => "Objects/box",
                 EntityTypes.ObjectCelo => "Objects/player",
@@ -30,7 +30,8 @@ namespace CeloIsYou.Extensions
 
         public static bool IsAction(this EntityTypes type)
             => type == EntityTypes.ActionPush || type == EntityTypes.ActionYou
-                                              || type == EntityTypes.ActionStop;
+                                              || type == EntityTypes.ActionStop
+                                              || type == EntityTypes.ActionKill;
 
         public static bool IsNature(this EntityTypes type)
             => type == EntityTypes.NatureCelo || type == EntityTypes.NatureRock

@@ -24,18 +24,11 @@ namespace CeloIsYou.Handlers
             var typeOf = command.GetType().Name;
             switch (typeOf)
             {
-                case nameof(ChangeTypeCommand): Apply((ChangeTypeCommand)command, gameTime); return;
                 case nameof(EnterGameCommand): Apply((EnterGameCommand)command, gameTime); return;
                 case nameof(ExitGameCommand): Apply((ExitGameCommand)command, gameTime); return;
                 case nameof(MoveInGridCommand): Apply((MoveInGridCommand)command, gameTime); return;
                 default: throw new ArgumentOutOfRangeException(nameof(command));
             }
-        }
-
-        private void Apply(ChangeTypeCommand command, GameTime gameTime)
-        {
-            command.Entity.Type = command.FromType;
-            command.Entity.SetTexture(_resources.GetEntityTexture(command.Entity.Type));
         }
 
         private void Apply(EnterGameCommand command, GameTime gameTime)

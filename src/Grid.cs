@@ -6,9 +6,9 @@ using CeloIsYou.Rules;
 
 namespace CeloIsYou
 {
-    public class Grid
+    public class Grid : IDisposable
     {
-        private class Cell
+        private class Cell : IDisposable
         {
             public readonly Coordinates Coordinates;
             public IReadOnlyList<Entity> Entities => _entities;
@@ -22,6 +22,11 @@ namespace CeloIsYou
                 _entities = new List<Entity>();
             }
 
+            public void Dispose()
+            {
+                _entities.Clear();
+            }
+
             public void Enter(Entity entity)
             {
                 _entities.Add(entity);
@@ -32,6 +37,7 @@ namespace CeloIsYou
             {
                 _entities.Remove(entity);
             }
+
         }
 
         private static IReadOnlyList<Entity> EmptyList = new List<Entity>();
@@ -197,6 +203,14 @@ namespace CeloIsYou
             cell.Exit(entity);
             if (cell.IsEmpty)
                 _cellsByCoordinates.Remove(cell.Coordinates);
+        }
+
+        public void Dispose()
+        {
+            foreach (var cell in _cellsByEntities.Values)
+                cell.Dispose();
+
+            _cellsByEntities.Clear();
         }
     }
 }
