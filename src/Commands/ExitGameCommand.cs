@@ -8,10 +8,10 @@ namespace CeloIsYou.Commands
         public readonly Coordinates Coordinates;
         public readonly Entity Entity;
 
-        public ExitGameCommand(Entity entity, Coordinates coordinates)
+        public ExitGameCommand(Entity entity)
         {
             Entity = entity;
-            Coordinates = coordinates;
+            Coordinates = entity.Coordinates;
         }
     }
 }

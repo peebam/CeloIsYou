@@ -4,9 +4,8 @@ using System;
 
 namespace CeloIsYou.Core
 {
-    public interface IScene : IDisposable
+    public interface IScene : IDisposable, IUpdatable
     {
         void Draw(GameTime gameTime);
-        void Update(GameTime gameTime); 
     }
 }

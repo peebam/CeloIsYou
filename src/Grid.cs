@@ -56,6 +56,14 @@ namespace CeloIsYou
             _cellsByEntities = new Dictionary<Entity, Cell>();
         }
 
+        public void Dispose()
+        {
+            foreach (var cell in _cellsByEntities.Values)
+                cell.Dispose();
+
+            _cellsByEntities.Clear();
+        }
+
         public bool Enter(Entity entity, Coordinates to)
         {
             if (!HasCell(to))
@@ -76,6 +84,87 @@ namespace CeloIsYou
             ExitCell(entity, cell);
             _cellsByEntities.Remove(entity);
             return true;
+        }
+
+        public List<Entity> GetEntities()
+            => _cellsByEntities.Keys.ToList();
+
+        public IReadOnlyList<Entity> GetEntities(Coordinates coordinates, Predicate<Entity> predicate)
+            => GetCell(coordinates, createIfNotExists: false)?.Entities.Where(e => predicate(e))
+                                                                       .ToList() ?? EmptyList;
+        public bool HasEntities(Coordinates coordinates, Predicate<Entity> predicate)
+            => GetCell(coordinates, createIfNotExists: false)?.Entities.Where(e => predicate(e))
+                                                                       .Any() ?? false;
+
+        public IEnumerable<Expression> GetExpressions()
+        {
+            var rulesHorizontal = GetExpressions(Direction.Right);
+            var rulesVertical = GetExpressions(Direction.Down);
+            return rulesHorizontal.Union(rulesVertical);
+        }
+
+        public bool IsMoveAllowed(Entity entity, Coordinates to)
+        {
+            if (!HasCell(to))
+                return false;
+
+            if (!_cellsByEntities.ContainsKey(entity))
+                return false;
+
+            return true;
+        }
+
+        public void Move(Entity entity, Coordinates to)
+        {
+            var fromCell = _cellsByEntities[entity];
+            ExitCell(entity, fromCell);
+
+            var toCell = EnterCell(entity, to);
+            _cellsByEntities[entity] = toCell;
+        }
+
+        private Cell EnterCell(Entity entity, Coordinates to)
+        {
+            if (!HasCell(to))
+                return null;
+
+            var cell = GetCell(to, createIfNotExists: true);
+            cell.Enter(entity);
+            return cell;
+        }
+
+        private void ExitCell(Entity entity, Cell cell)
+        {
+            cell.Exit(entity);
+            if (cell.IsEmpty)
+                _cellsByCoordinates.Remove(cell.Coordinates);
+        }
+        private IEnumerable<Expression> GetExpressions(Direction direction)
+        {
+            var verbs = _cellsByEntities.Where(kv => kv.Key.Type.IsVerb())
+                                               .OrderBy(kv => kv.Value.Coordinates.Y)
+                                               .ThenBy(kv => kv.Value.Coordinates.X)
+                                               .Select(kv => new { Cell = kv.Value, Entity = kv.Key })
+                                               .ToList();
+
+            var rules = new List<Expression>();
+            foreach (var verb in verbs)
+            {
+                var leftCell = GetCell(verb.Cell.Coordinates, direction.Reverse());
+                var rightCell = GetCell(verb.Cell.Coordinates, direction);
+                if (leftCell == null || rightCell == null)
+                    continue;
+
+                var subjects = leftCell.Entities.Where(e => e.Type.IsNature());
+                var objects = rightCell.Entities.Where(e => e.Type.IsNature() || e.Type.IsState());
+                if (!subjects.Any() || !objects.Any())
+                    continue;
+
+                var rule = new Expression(subjects.First().Type, verb.Entity.Type, objects.First().Type);
+
+                rules.Add(rule);
+            }
+            return rules;
         }
 
         private Cell GetCell(Entity entity)
@@ -114,103 +203,10 @@ namespace CeloIsYou
             return _cellsByCoordinates[coordinates_];
         }
 
-        public Coordinates GetCoordinates(Entity entity)
-            => GetCell(entity)?.Coordinates ?? null;
-
-        public List<Entity> GetEntities()
-            => _cellsByEntities.Keys.ToList();
-
-        public IReadOnlyList<Entity> GetEntities(Coordinates coordinates)
-            => GetCell(coordinates, createIfNotExists: false)?.Entities ?? EmptyList;
-
-        public IReadOnlyList<Entity> GetEntities(Coordinates coordinates, Predicate<Entity> predicate)
-            => GetCell(coordinates, createIfNotExists: false)?.Entities.Where(e => predicate(e))
-                                                                       .ToList() ?? EmptyList;
-
-        public IEnumerable<Expression> GetExpressions()
-        {
-            var rulesHorizontal = GetExpressions(Direction.Right);
-            var rulesVertical = GetExpressions(Direction.Down);
-            return rulesHorizontal.Union(rulesVertical);
-        }
-
-        public bool HasCell(Coordinates coordinates)
+        private bool HasCell(Coordinates coordinates)
             => coordinates.X >= 0 && coordinates.X < _width && coordinates.Y >= 0 && coordinates.Y < _height;
 
-        public bool HasCell(Coordinates coordinates, Direction direction)
+        private bool HasCell(Coordinates coordinates, Direction direction)
             => coordinates.TryAdd(direction, out var coordinates_) && HasCell(coordinates_);
-
-        public bool IsMoveAllowed(Entity entity, Coordinates to)
-        {
-            if (!HasCell(to))
-                return false;
-
-            if (!_cellsByEntities.ContainsKey(entity))
-                return false;
-
-            return true;
-        }
-
-        public void Move(Entity entity, Coordinates to)
-        {
-            var fromCell = _cellsByEntities[entity];
-            ExitCell(entity, fromCell);
-
-            var toCell = EnterCell(entity, to);
-            _cellsByEntities[entity] = toCell;
-        }
-
-        private IEnumerable<Expression> GetExpressions(Direction direction)
-        {
-            var verbs = _cellsByEntities.Where(kv => kv.Key.Type.IsVerb())
-                                               .OrderBy(kv => kv.Value.Coordinates.Y)
-                                               .ThenBy(kv => kv.Value.Coordinates.X)
-                                               .Select(kv => new { Cell = kv.Value, Entity = kv.Key })
-                                               .ToList();
-
-            var rules = new List<Expression>();
-            foreach (var verb in verbs)
-            {
-                var leftCell = GetCell(verb.Cell.Coordinates, direction.Reverse());
-                var rightCell = GetCell(verb.Cell.Coordinates, direction);
-                if (leftCell == null || rightCell == null)
-                    continue;
-
-                var subjects = leftCell.Entities.Where(e => e.Type.IsNature());
-                var objects = rightCell.Entities.Where(e => e.Type.IsNature() || e.Type.IsAction());
-                if (!subjects.Any() || !objects.Any())
-                    continue;
-
-                var rule = new Expression(subjects.First().Type, verb.Entity.Type, objects.First().Type);
-
-                rules.Add(rule);
-            }
-            return rules;
-        }
-
-        private Cell EnterCell(Entity entity, Coordinates to)
-        {
-            if (!HasCell(to))
-                return null;
-
-            var cell = GetCell(to, createIfNotExists: true);
-            cell.Enter(entity);
-            return cell;
-        }
-
-        private void ExitCell(Entity entity, Cell cell)
-        {
-            cell.Exit(entity);
-            if (cell.IsEmpty)
-                _cellsByCoordinates.Remove(cell.Coordinates);
-        }
-
-        public void Dispose()
-        {
-            foreach (var cell in _cellsByEntities.Values)
-                cell.Dispose();
-
-            _cellsByEntities.Clear();
-        }
     }
 }

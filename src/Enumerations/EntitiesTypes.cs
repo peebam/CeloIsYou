@@ -2,9 +2,11 @@ namespace CeloIsYou.Enumerations
 {
     public enum EntityTypes
     {
-        ActionKill,
-        ActionPush,
-        ActionStop,
+        StateKill,
+        StatePush,
+        StateStop,
+        StateWeak,
+        StateWin,
         ActionYou,
 
         ObjectBox,
@@ -18,6 +20,7 @@ namespace CeloIsYou.Enumerations
         NatureText,
         NatureCelo,
         NatureRock,
+        NatureSpot,
         NatureWall
     }
 }

@@ -6,10 +6,10 @@ namespace CeloIsYou.Commands
         public readonly Coordinates FromCoordinates;
         public readonly Coordinates ToCoordinates;
 
-        public MoveInGridCommand(Entity entity, Coordinates fromCoordinates, Coordinates toCoordinates)
+        public MoveInGridCommand(Entity entity,  Coordinates toCoordinates)
         {
             Entity = entity;
-            FromCoordinates = fromCoordinates;
+            FromCoordinates = entity.Coordinates;
             ToCoordinates = toCoordinates;
         }
     }

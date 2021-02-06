@@ -8,10 +8,13 @@ namespace CeloIsYou.Extensions
         public static string ToContentName(this EntityTypes type)
             => type switch
             {
-                EntityTypes.ActionKill => "Actions/kill",
-                EntityTypes.ActionPush => "Actions/push",
-                EntityTypes.ActionStop => "Actions/stop",
-                EntityTypes.ActionYou => "Actions/you",
+                EntityTypes.StateKill => "States/kill",
+                EntityTypes.StatePush => "States/push",
+                EntityTypes.StateStop => "States/stop",
+                EntityTypes.StateWeak => "States/weak",
+                EntityTypes.StateWin => "States/win",
+
+                EntityTypes.ActionYou => "States/you",
 
                 EntityTypes.ObjectBox => "Objects/box",
                 EntityTypes.ObjectCelo => "Objects/player",
@@ -23,15 +26,18 @@ namespace CeloIsYou.Extensions
 
                 EntityTypes.NatureCelo => "Natures/celo",
                 EntityTypes.NatureRock => "Natures/rock",
+                EntityTypes.NatureSpot => "Natures/spot",
                 EntityTypes.NatureText => "Natures/text",
                 EntityTypes.NatureWall => "Natures/wall",
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        public static bool IsAction(this EntityTypes type)
-            => type == EntityTypes.ActionPush || type == EntityTypes.ActionYou
-                                              || type == EntityTypes.ActionStop
-                                              || type == EntityTypes.ActionKill;
+        public static bool IsState(this EntityTypes type)
+            => type == EntityTypes.StatePush || type == EntityTypes.ActionYou
+                                              || type == EntityTypes.StateStop
+                                              || type == EntityTypes.StateKill
+                                              || type == EntityTypes.StateWeak
+                                              || type == EntityTypes.StateWin;
 
         public static bool IsNature(this EntityTypes type)
             => type == EntityTypes.NatureCelo || type == EntityTypes.NatureRock

@@ -8,7 +8,6 @@ namespace CeloIsYou
 {
     public class Pipeline
     {
-        public IEnumerable<Core.IDrawable> Drawables => _drawables;
         private readonly List<Core.IDrawable> _drawables;
 
         private readonly SpriteBatch _spriteBatch;
@@ -28,25 +27,17 @@ namespace CeloIsYou
         public void Draw(GameTime gameTime)
         {
             Update(gameTime);
-            var drawables = Drawables.OrderBy(d => d.DrawOrder);
+            var drawables = _drawables.Where(d => d.Visible)
+                                      .OrderBy(d => d.DrawOrder);
+
             foreach (var drawable in drawables)
                 _spriteBatch.Draw(drawable.Texture, drawable.Position, Color.White);
         }
 
         public void Subscribe(Core.IDrawable drawable)
-        {
-            if (drawable == null)
-                throw new ArgumentNullException(nameof(drawable));
-
-            _drawables.Add(drawable);
-        }
-
+            => _drawables.Add(drawable);
+        
         public void Unsubscribe(Core.IDrawable drawable)
-        {
-            if (drawable == null)
-                throw new ArgumentNullException(nameof(drawable));
-
-            _drawables.Remove(drawable);
-        }
+            => _drawables.Remove(drawable);
     }
 }

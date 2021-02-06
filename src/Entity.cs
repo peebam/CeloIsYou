@@ -1,29 +1,30 @@
-using CeloIsYou.Animations;
+using CeloIsYou.Interpolator;
 using CeloIsYou.Enumerations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using CeloIsYou.Core;
+using CeloIsYou.Extensions;
 
 namespace CeloIsYou
 {
     public class Entity : Core.IDrawable
     {
-        private static readonly Vector2 NoPosition = new(-1, -1);
-
-        private IAnimation _animation;
+        private PositionMover _animation;
 
         public bool IsControlled { get; set; }
-        public bool IsKilling { get; set; } = true;
+        public bool IsKilling { get; set; }
         public bool IsPushable { get; set; }
         public bool IsStoping { get; set; }
+        public bool IsWeak { get; set; }
+        public bool IsWin { get; set; }
 
         public int DrawOrder { get; set; }
-
 
         public Coordinates Coordinates { get; private set; }
         public Vector2 Position { get; private set; }
         public Texture2D Texture { get; private set; }
         public EntityTypes Type { get; set; }
+
+        public bool Visible { get; private set; }
 
         public Entity(EntityTypes type)
         {
@@ -32,7 +33,7 @@ namespace CeloIsYou
 
         public void ClearPosition()
         {
-            Position = NoPosition;
+            Visible = false;
         }
 
         public void ClearStates()
@@ -40,16 +41,14 @@ namespace CeloIsYou
             IsStoping = false;
             IsPushable = false;
             IsControlled = false;
+            IsWeak = false;
+            IsWin = false;
         }
 
-        public void SetPosition(Vector2 position, GameTime gameTime)
+        public void SetCoordinates(Coordinates coordinates, GameTime gameTime)
         {
-            if (Position == NoPosition)
-            {
-                Position = position;
-                return;
-            }
-            _animation = new PositionAnimation(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
+            Coordinates = coordinates;
+            SetPosition(coordinates.ToPosition(), gameTime);
         }
 
         public void SetTexture(Texture2D texture)
@@ -65,6 +64,17 @@ namespace CeloIsYou
                 if (_animation.IsDone)
                     _animation = null;
             }
+        }
+
+        private void SetPosition(Vector2 position, GameTime gameTime)
+        {
+            if (!Visible)
+            {
+                Visible = true;
+                Position = position;
+                return;
+            }
+            _animation = new PositionMover(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
         }
     }
 }

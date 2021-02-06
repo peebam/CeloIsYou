@@ -33,8 +33,8 @@ namespace CeloIsYou.Handlers
         private void Apply(EnterGameCommand command, GameTime gameTime)
         {
             _grid.Enter(command.Entity, command.Coordinates);
-            command.Entity.SetPosition(command.Coordinates.ToPosition(), gameTime);
-            command.Entity.SetTexture(_resources.GetEntityTexture(command.Entity.Type));
+            command.Entity.SetCoordinates(command.Coordinates, gameTime);
+            command.Entity.SetTexture(_resources.GetTexture(command.Entity.Type.ToContentName()));
             _pipeline.Subscribe(command.Entity);
         }
 
@@ -48,7 +48,7 @@ namespace CeloIsYou.Handlers
         private void Apply(MoveInGridCommand command, GameTime gameTime)
         {
             _grid.Move(command.Entity, command.ToCoordinates);
-            command.Entity.SetPosition(command.ToCoordinates.ToPosition(), gameTime);
+            command.Entity.SetCoordinates(command.ToCoordinates, gameTime);
         }
     }
 }

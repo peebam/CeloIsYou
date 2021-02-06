@@ -1,14 +1,12 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace CeloIsYou.Core
 {
-    public interface IDrawable
+    public interface IDrawable : ISprite, IUpdatable
     {
         int DrawOrder { get; }
         Vector2 Position { get; }
-        Texture2D Texture { get; }
-        
-        void Update(GameTime gameTime);
+        bool Visible { get; }
+
     }
 }

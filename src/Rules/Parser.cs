@@ -13,15 +13,18 @@ namespace CeloIsYou.Rules
         {
             [EntityTypes.NatureCelo] = (e => e.Type == EntityTypes.ObjectCelo),
             [EntityTypes.NatureRock] = (e => e.Type == EntityTypes.ObjectRock),
-            [EntityTypes.NatureText] = (e => e.Type.IsNature() || e.Type.IsAction() || e.Type.IsVerb()),
+            [EntityTypes.NatureSpot] = (e => e.Type == EntityTypes.ObjectSpot),
+            [EntityTypes.NatureText] = (e => e.Type.IsNature() || e.Type.IsState() || e.Type.IsVerb()),
             [EntityTypes.NatureWall] = (e => e.Type == EntityTypes.ObjectWall),
         };
 
-        private static readonly Dictionary<EntityTypes, Action<Entity>> _actions = new()
+        private static readonly Dictionary<EntityTypes, Action<Entity>> _states = new()
         {
-            [EntityTypes.ActionKill] = (e => e.IsKilling = true),
-            [EntityTypes.ActionPush] = (e => e.IsPushable = true),
-            [EntityTypes.ActionStop] = (e => e.IsStoping = true),
+            [EntityTypes.StateKill] = (e => e.IsKilling = true),
+            [EntityTypes.StatePush] = (e => e.IsPushable = true),
+            [EntityTypes.StateStop] = (e => e.IsStoping = true),
+            [EntityTypes.StateWeak] = (e => e.IsWeak = true),
+            [EntityTypes.StateWin] = (e => e.IsWin = true),
             [EntityTypes.ActionYou] = (e => e.IsControlled = true),
         };
 
@@ -30,51 +33,68 @@ namespace CeloIsYou.Rules
             [EntityTypes.NatureCelo] = EntityTypes.ObjectCelo,
             [EntityTypes.NatureRock] = EntityTypes.ObjectRock,
             [EntityTypes.NatureWall] = EntityTypes.ObjectWall,
+            [EntityTypes.NatureSpot] = EntityTypes.ObjectSpot,
         };
 
         public Parser()
         {
         }
 
-        public Result Process(IEnumerable<Expression> expressions, IEnumerable<Entity> entities, Grid grid)
+        public Result Process(IEnumerable<Expression> expressions, IEnumerable<Entity> entities)
         {
-            
-            var commands = new List<ICommand>();
-            var rules = new List<Rule>();
-
-            foreach (var expression in expressions)
-                ProcessCore(expression, entities, grid, commands, rules);
+            var rules = ProcessStateChangingExpression(expressions);
+            var commands = ProcessTypeChangingExpression(expressions, entities);
 
             return new Result(commands, rules);
         }
 
-        private void ProcessCore(Expression expression, IEnumerable<Entity> entities, Grid grid, List<ICommand> commands, List<Rule> rules)
+        private List<Rule> ProcessStateChangingExpression(IEnumerable<Expression> expressions)
         {
-            if (!_predicates.TryGetValue(expression.Subject, out var predicate))
-                return;
+            var rules = new List<Rule>();
+            var stateChangingExpressions = expressions.Where(e => e.IsStateChanging());
 
-            if (_actions.TryGetValue(expression.Object, out var action))
+            foreach (var expression in stateChangingExpressions)
             {
-                var rule = new Rule(predicate, action);
+                if (!_predicates.TryGetValue(expression.Subject, out var predicate))
+                    continue;
+
+                if (!_states.TryGetValue(expression.Object, out var state))
+                    continue;
+
+                var rule = new Rule(predicate, state);
                 rules.Add(rule);
-                return;
             }
-            
-            if (_types.TryGetValue(expression.Object, out var type))
-            {
-                entities = entities.Where(e => predicate(e));
-                foreach (var entity in entities)
-                {
 
-                    var coordinates = grid.GetCoordinates(entity);
-                    var commandExit = new ExitGameCommand(entity, coordinates);
+            return rules;
+        }
+
+        private List<ICommand> ProcessTypeChangingExpression(IEnumerable<Expression> expressions, IEnumerable<Entity> entities)
+        {
+            var commands = new List<ICommand>();
+            var typeChangingExpressions = expressions.Where(e => e.IsTypeChanging()
+                                                              && _predicates.ContainsKey(e.Subject)
+                                                              && _types.ContainsKey(e.Object)).GroupBy(e => e.Subject);
+
+            foreach (var group in typeChangingExpressions)
+            {
+                var predicate = _predicates[group.Key];
+                var entitiesTypeToChange = entities.Where(e => predicate(e));
+
+                foreach (var entity in entitiesTypeToChange)
+                {
+                    var commandExit = new ExitGameCommand(entity);
                     commands.Add(commandExit);
 
-                    var newEntity = new Entity(type);
-                    var commandEnter = new EnterGameCommand(newEntity, coordinates);
-                    commands.Add(commandEnter);
+                    foreach(var expression in group)
+                    {
+                        var newType = _types[expression.Object];
+                        var newEntity = new Entity(newType);
+                        var commandEnter = new EnterGameCommand(newEntity, entity.Coordinates);
+                        commands.Add(commandEnter);
+                    }
                 }
             }
+            return commands;
         }
     }
 }

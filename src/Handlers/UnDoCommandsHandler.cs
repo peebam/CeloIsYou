@@ -1,7 +1,6 @@
 ﻿
 using System;
 using CeloIsYou.Commands;
-using CeloIsYou.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace CeloIsYou.Handlers
@@ -41,14 +40,14 @@ namespace CeloIsYou.Handlers
         private void Apply(ExitGameCommand command, GameTime gameTime)
         {
             _grid.Enter(command.Entity, command.Coordinates);
-            command.Entity.SetPosition(command.Coordinates.ToPosition(), gameTime);
+            command.Entity.SetCoordinates(command.Coordinates, gameTime);
             _pipeline.Subscribe(command.Entity);
         }
 
         private void Apply(MoveInGridCommand command, GameTime gameTime)
         {
             _grid.Move(command.Entity, command.FromCoordinates);
-            command.Entity.SetPosition(command.FromCoordinates.ToPosition(), gameTime);
+            command.Entity.SetCoordinates(command.FromCoordinates, gameTime);
         }
     }
 }

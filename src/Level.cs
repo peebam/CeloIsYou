@@ -26,12 +26,15 @@ namespace CeloIsYou
         private readonly Rectangle _screen;
         private readonly SpriteBatch _spriteBatch;
 
+        private Stack<ICommand> _turn;
         private readonly Stack<Stack<ICommand>> _turns;
 
         private readonly ICommandsHandler _doCommandsHandler;
         private readonly ICommandsHandler _unDoCommandsHandler;
 
         private Delay _inputDelayer;
+
+        private BasicAnimation _testSmoke;
 
         public Level(GraphicsDevice graphicsDevice, Resources resources)
         {
@@ -55,32 +58,41 @@ namespace CeloIsYou
 
         private void Initialize(GameTime gameTime)
         {
-
+            _testSmoke = new BasicAnimation(new[] {
+                _resources.GetTexture("Others/Smoke/Smoke_01"),
+                _resources.GetTexture("Others/Smoke/Smoke_02"),
+                _resources.GetTexture("Others/Smoke/Smoke_03"),
+                _resources.GetTexture("Others/Smoke/Smoke_04")
+            }, 0.3);
+            
             InitializeEntity(new Entity(EntityTypes.NatureText), new Coordinates(10, 0), gameTime);
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(11, 0), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ActionPush), new Coordinates(12, 0), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ActionStop), new Coordinates(13, 5), gameTime);
+            InitializeEntity(new Entity(EntityTypes.StatePush), new Coordinates(12, 0), gameTime);
+            InitializeEntity(new Entity(EntityTypes.StateStop), new Coordinates(13, 5), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(4, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(6, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.NatureRock), new Coordinates(7, 1), gameTime);
+            InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(6, 1), gameTime);
+            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(7, 1), gameTime);
+            InitializeEntity(new Entity(EntityTypes.NatureRock), new Coordinates(8, 1), gameTime);
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(9, 1), gameTime);
             InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(10, 1), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(5, 2), gameTime);
             InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(5, 3), gameTime);
 
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(8, 2), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ActionPush), new Coordinates(8, 3), gameTime);
+            InitializeEntity(new Entity(EntityTypes.StatePush), new Coordinates(8, 3), gameTime);
 
             InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(20, 2), gameTime);
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(21, 2), gameTime);
             InitializeEntity(new Entity(EntityTypes.ActionYou), new Coordinates(22, 2), gameTime);
 
+            InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(20, 3), gameTime);
+            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(21, 3), gameTime);
+            InitializeEntity(new Entity(EntityTypes.StateWeak), new Coordinates(22, 3), gameTime);
+
 
             InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(1, 12), gameTime);
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(2, 12), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ActionKill), new Coordinates(3, 12), gameTime);
+            InitializeEntity(new Entity(EntityTypes.StateKill), new Coordinates(3, 12), gameTime);
 
             InitializeEntity(new Entity(EntityTypes.ObjectSpot), new Coordinates(7, 7), gameTime);
             InitializeEntity(new Entity(EntityTypes.ObjectSpot), new Coordinates(8, 8), gameTime);
@@ -107,37 +119,34 @@ namespace CeloIsYou
 
         private void Move(Direction direction, GameTime gameTime)
         {
-            var turn = new Stack<ICommand>();
+            if (_turn != null)
+                return;
+
+            _turn = new Stack<ICommand>();
+
             var controlledEntities = _grid.GetEntities().Where(e => e.IsControlled).ToList();
             while (controlledEntities.Any())
             {
                 var entity = controlledEntities.ElementAt(0);
-                MoveControlledEntity(entity, direction, gameTime, controlledEntities, turn);
+                MoveControlledEntity(entity, direction, gameTime, controlledEntities);
             }
-            
-            var commands = UpdateRules(gameTime);
-            turn.PushAll(commands);
-
-            if (turn.Any())
-                _turns.Push(turn);
         }
 
-        private bool MoveControlledEntity(Entity entity, Direction direction, GameTime gameTime, List<Entity> controlledEntities, Stack<ICommand> commands)
+        private bool MoveControlledEntity(Entity entity, Direction direction, GameTime gameTime, List<Entity> controlledEntities)
         {
             if (!controlledEntities.Contains(entity))
                 return false;
 
             controlledEntities.Remove(entity);
-            return MoveEntity(entity, direction, gameTime, controlledEntities, commands);
+            return MoveEntity(entity, direction, gameTime, controlledEntities);
         }
 
-        private bool MoveEntity(Entity entity, Direction direction, GameTime gameTime, List<Entity> controlledEntities, Stack<ICommand> commands)
+        private bool MoveEntity(Entity entity, Direction direction, GameTime gameTime, List<Entity> controlledEntities)
         {
-            var currentCoordinates = _grid.GetCoordinates(entity);
-            if (currentCoordinates == null)
+            if (entity.Coordinates == null)
                 return false;
 
-            if (!currentCoordinates.TryAdd(direction, out var nextCellCoordinates))
+            if (!entity.Coordinates.TryAdd(direction, out var nextCellCoordinates))
                 return false;
 
             if (!_grid.IsMoveAllowed(entity, nextCellCoordinates))
@@ -145,17 +154,17 @@ namespace CeloIsYou
 
             var controlledEntitesCell = _grid.GetEntities(nextCellCoordinates, e => e.IsControlled);
             foreach (var controlledEntity in controlledEntitesCell)
-                MoveControlledEntity(controlledEntity, direction, gameTime, controlledEntities, commands);
+                MoveControlledEntity(controlledEntity, direction, gameTime, controlledEntities);
 
             var pushableEntitiesCell = _grid.GetEntities(nextCellCoordinates, e => e.IsPushable);
             foreach (var pushableEntity in pushableEntitiesCell)
-                MoveEntity(pushableEntity, direction, gameTime, controlledEntities, commands);
+                MoveEntity(pushableEntity, direction, gameTime, controlledEntities);
 
             if (_grid.GetEntities(nextCellCoordinates, e => e.IsStoping).Any())
                 return false;
 
-            var command = new MoveInGridCommand(entity, currentCoordinates, nextCellCoordinates);
-            commands.Push(command);
+            var command = new MoveInGridCommand(entity, nextCellCoordinates);
+            _turn.Push(command);
             _doCommandsHandler.Apply(command, gameTime);
             return true;
         }
@@ -172,22 +181,18 @@ namespace CeloIsYou
                 _unDoCommandsHandler.Apply(command, gameTime);
             }
 
-            UpdateRules(gameTime); 
+            UpdateRules(); 
         }
 
         private IReadOnlyCollection<ICommand> UpdateRules(GameTime gameTime)
         {
             var entities = _grid.GetEntities();
             var expressions = _grid.GetExpressions();
-            var result = _parser.Process(expressions, entities, _grid);
-            
-            var commands = new List<ICommand>();
-            foreach (var command in result.Commands)
-            {
-                commands.Add(command);
-                _doCommandsHandler.Apply(command, gameTime);
-            }
+            var result = _parser.Process(expressions, entities);
 
+            foreach (var command in result.Commands) 
+                _doCommandsHandler.Apply(command, gameTime);
+            
             entities = _grid.GetEntities();
             foreach (var entity in entities)
                 entity.ClearStates();
@@ -195,7 +200,35 @@ namespace CeloIsYou
             foreach (var rule in result.Rules)
                 rule.Apply(entities);
 
-            return commands;
+            List<ICommand> commands = new List<ICommand>();
+            var weakEntities = entities.Where(e => e.IsWeak);
+            foreach(var weakEntity in weakEntities)
+            {
+                
+                if (!_grid.HasEntities(weakEntity.Coordinates, e => e.IsKilling && e != weakEntity))
+                    continue;
+
+                var command = new ExitGameCommand(weakEntity);
+                _doCommandsHandler.Apply(command, gameTime);
+                commands.Add(command);
+            }
+
+
+            return result.Commands.Concat(commands).ToList();
+        }
+
+        private void UpdateRules()
+        {
+            var entities = _grid.GetEntities();
+            var expressions = _grid.GetExpressions();
+            var result = _parser.Process(expressions, entities);
+
+            entities = _grid.GetEntities();
+            foreach (var entity in entities)
+                entity.ClearStates();
+
+            foreach (var rule in result.Rules)
+                rule.Apply(entities);
         }
 
         public void Draw(GameTime gameTime)
@@ -223,6 +256,17 @@ namespace CeloIsYou
 
             if (!_inputDelayer.Update(gameTime))
                 return;
+
+            if (_turn != null)
+            {
+                var commands = UpdateRules(gameTime);
+                _turn.PushAll(commands);
+
+                if (_turn.Any())
+                    _turns.Push(_turn);
+
+                _turn = null;
+            }
 
             if (Keyboard.GetState().GetPressedKeyCount() == 0)
                 Configuration.Instance.GameSpeed = 0.15;
