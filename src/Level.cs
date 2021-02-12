@@ -4,6 +4,7 @@ using CeloIsYou.Enumerations;
 using CeloIsYou.Extensions;
 using CeloIsYou.Handlers;
 using CeloIsYou.Rules;
+using CeloIsYou.src.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -20,7 +21,8 @@ namespace CeloIsYou
         private readonly GraphicsDevice _graphicsDevice;
         private readonly Grid _grid;
         private readonly Parser _parser;
-        private readonly Pipeline _pipeline;
+        private readonly PipelineDrawables _pipelineDrawables;
+        private readonly PipelineEntities _pipelineEntities;
         private readonly RenderTarget2D _renderTarget;
         private readonly Resources _resources;
         private readonly Rectangle _screen;
@@ -33,8 +35,6 @@ namespace CeloIsYou
         private readonly ICommandsHandler _unDoCommandsHandler;
 
         private Delay _inputDelayer;
-
-        private BasicAnimation _testSmoke;
 
         public Level(GraphicsDevice graphicsDevice, Resources resources)
         {
@@ -50,21 +50,15 @@ namespace CeloIsYou
             _spriteBatch = new SpriteBatch(_graphicsDevice);
             _turns = new Stack<Stack<ICommand>>();
 
-            _pipeline = new Pipeline(_spriteBatch);
-
-            _doCommandsHandler = new DoCommandsHandler(_pipeline, _resources, _grid);
-            _unDoCommandsHandler = new UnDoCommandsHandler(_pipeline, _resources, _grid);
+            _pipelineDrawables = new PipelineDrawables(_spriteBatch);
+            _pipelineEntities = new PipelineEntities(_pipelineDrawables);
+            
+            _doCommandsHandler = new DoCommandsHandler(_pipelineEntities, _resources, _grid);
+            _unDoCommandsHandler = new UnDoCommandsHandler(_pipelineEntities, _resources, _grid);
         }
 
         private void Initialize(GameTime gameTime)
         {
-            _testSmoke = new BasicAnimation(new[] {
-                _resources.GetTexture("Others/Smoke/Smoke_01"),
-                _resources.GetTexture("Others/Smoke/Smoke_02"),
-                _resources.GetTexture("Others/Smoke/Smoke_03"),
-                _resources.GetTexture("Others/Smoke/Smoke_04")
-            }, 0.3);
-            
             InitializeEntity(new Entity(EntityTypes.NatureText), new Coordinates(10, 0), gameTime);
             InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(11, 0), gameTime);
             InitializeEntity(new Entity(EntityTypes.StatePush), new Coordinates(12, 0), gameTime);
@@ -137,6 +131,8 @@ namespace CeloIsYou
             if (!controlledEntities.Contains(entity))
                 return false;
 
+            _pipelineEntities.Subscribe(new Sprite(entity.Position, _resources.GetAnimationSmoke()));
+
             controlledEntities.Remove(entity);
             return MoveEntity(entity, direction, gameTime, controlledEntities);
         }
@@ -194,12 +190,9 @@ namespace CeloIsYou
                 _doCommandsHandler.Apply(command, gameTime);
             
             entities = _grid.GetEntities();
-            foreach (var entity in entities)
-                entity.ClearStates();
-
-            foreach (var rule in result.Rules)
-                rule.Apply(entities);
-
+            entities.ClearStatesAll();
+            result.Rules.ApplyAll(entities);
+            
             List<ICommand> commands = new List<ICommand>();
             var weakEntities = entities.Where(e => e.IsWeak);
             foreach(var weakEntity in weakEntities)
@@ -212,7 +205,6 @@ namespace CeloIsYou
                 _doCommandsHandler.Apply(command, gameTime);
                 commands.Add(command);
             }
-
 
             return result.Commands.Concat(commands).ToList();
         }
@@ -237,7 +229,7 @@ namespace CeloIsYou
             _graphicsDevice.Clear(Color.Black);
 
             _spriteBatch.Begin();
-            _pipeline.Draw(gameTime);
+            _pipelineDrawables.Draw(gameTime);
             _spriteBatch.End();
 
             _graphicsDevice.SetRenderTarget(null);
@@ -255,7 +247,10 @@ namespace CeloIsYou
             }
 
             if (!_inputDelayer.Update(gameTime))
+            {
+                _pipelineEntities.Update(gameTime);
                 return;
+            }
 
             if (_turn != null)
             {
@@ -274,7 +269,6 @@ namespace CeloIsYou
                 _inputDelayer = new Delay(gameTime, Configuration.Instance.GameSpeed);
 
             Direction direction = null;
-
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
                 direction = Direction.Up;
             else if (Keyboard.GetState().IsKeyDown(Keys.Down))
@@ -291,6 +285,8 @@ namespace CeloIsYou
 
             if (direction != null)
                 Move(direction, gameTime);
+
+            _pipelineEntities.Update(gameTime);
         }
 
         public void Dispose()

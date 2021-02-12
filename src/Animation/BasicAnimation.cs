@@ -12,7 +12,7 @@ namespace CeloIsYou.Core
         private double _frameLast;
         private double _unconsumedTime;
        
-        public bool IsDone { get; }
+        public bool IsDone { get; private set; }
         public Texture2D Texture => _frames[_currentFrame];
 
         public BasicAnimation(IList<Texture2D> frames, double frameLast)
@@ -28,7 +28,12 @@ namespace CeloIsYou.Core
             var elapsedTime = _unconsumedTime + gameTime.ElapsedGameTime.TotalSeconds;
             var frameAdvance = (int)Math.Floor(elapsedTime / _frameLast);
 
-            _currentFrame = (_currentFrame + frameAdvance) % _frames.Count;
+            _currentFrame = (_currentFrame + frameAdvance);
+            if (_currentFrame >= _frames.Count)
+            {
+                _currentFrame = _frames.Count - 1;
+                IsDone = true;
+            }
             _unconsumedTime = elapsedTime % _frameLast;
         }
     }

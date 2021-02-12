@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using CeloIsYou.Core;
 using CeloIsYou.Enumerations;
 using CeloIsYou.Extensions;
 using Microsoft.Xna.Framework.Content;
@@ -23,6 +24,16 @@ namespace CeloIsYou
         public Texture2D GetTexture(string name)
             => _pictures[name];
 
+        public IAnimation GetAnimationSmoke()
+        {
+            return new BasicAnimation(new[] {
+                _pictures["Others/Smoke/Smoke_01"],
+                _pictures["Others/Smoke/Smoke_02"],
+                _pictures["Others/Smoke/Smoke_03"],
+                _pictures["Others/Smoke/Smoke_04"]
+            }, 0.1);
+        }
+
         public void Load()
         {
             foreach (var type in (EntityTypes[])Enum.GetValues(typeof(EntityTypes)))
@@ -31,7 +42,6 @@ namespace CeloIsYou
                 var picture = _contentManager.Load<Texture2D>(contentName);
                 _pictures[contentName] = picture;
             }
-
 
             _pictures["Others/Smoke/Smoke_01"] = _contentManager.Load<Texture2D>("Others/Smoke/Smoke_01");
             _pictures["Others/Smoke/Smoke_02"] = _contentManager.Load<Texture2D>("Others/Smoke/Smoke_02");

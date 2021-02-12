@@ -8,10 +8,10 @@ namespace CeloIsYou.Handlers
     public class DoCommandsHandler : ICommandsHandler
     {
         private Grid _grid;
-        private Pipeline _pipeline;
+        private PipelineEntities _pipeline;
         private Resources _resources;
 
-        public DoCommandsHandler(Pipeline pipeline, Resources resources, Grid grid)
+        public DoCommandsHandler(PipelineEntities pipeline, Resources resources, Grid grid)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));

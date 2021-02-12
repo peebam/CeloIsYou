@@ -3,12 +3,15 @@ using CeloIsYou.Enumerations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using CeloIsYou.Extensions;
+using CeloIsYou.Core;
 
 namespace CeloIsYou
 {
-    public class Entity : Core.IDrawable
+    public class Entity :  IEntity
     {
-        private PositionMover _animation;
+        private PositionInterpolator _animation;
+
+        public bool IsDone => false;
 
         public bool IsControlled { get; set; }
         public bool IsKilling { get; set; }
@@ -74,7 +77,7 @@ namespace CeloIsYou
                 Position = position;
                 return;
             }
-            _animation = new PositionMover(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
+            _animation = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
         }
     }
 }

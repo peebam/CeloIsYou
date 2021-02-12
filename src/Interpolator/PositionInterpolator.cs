@@ -3,18 +3,18 @@ using Microsoft.Xna.Framework;
 
 namespace CeloIsYou.Interpolator
 {
-    public class PositionMover
+    public class PositionInterpolator
     {
         private readonly double _animationLast;
         private readonly Vector2 _fromPosition;
 
         private readonly double _initialGameTime;
         private readonly Vector2 _toPosition;
-        private readonly Action<PositionMover> _update;
+        private readonly Action<PositionInterpolator> _update;
         public Vector2 CurrentPosition { get; private set; }
         public bool IsDone { get; private set; }
 
-        public PositionMover(Vector2 fromPosition, Vector2 toPosition, double animationLast, GameTime gameTime, Action<PositionMover> update)
+        public PositionInterpolator(Vector2 fromPosition, Vector2 toPosition, double animationLast, GameTime gameTime, Action<PositionInterpolator> update)
         {
             _animationLast = animationLast;
             _fromPosition = fromPosition;
