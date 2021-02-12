@@ -21,8 +21,7 @@ namespace CeloIsYou
         private readonly GraphicsDevice _graphicsDevice;
         private readonly Grid _grid;
         private readonly Parser _parser;
-        private readonly PipelineDrawables _pipelineDrawables;
-        private readonly PipelineEntities _pipelineEntities;
+        private readonly PipelineEntities _pipeline;
         private readonly RenderTarget2D _renderTarget;
         private readonly Resources _resources;
         private readonly Rectangle _screen;
@@ -34,14 +33,14 @@ namespace CeloIsYou
         private readonly ICommandsHandler _doCommandsHandler;
         private readonly ICommandsHandler _unDoCommandsHandler;
 
-        private Delay _inputDelayer;
+        private Timeout _inputTimeout;
 
         public Level(GraphicsDevice graphicsDevice, Resources resources)
         {
 
             _graphicsDevice = graphicsDevice;
             _grid = new Grid(Configuration.Instance.GridWidth, Configuration.Instance.GridHeight);
-            _inputDelayer = new Delay(Configuration.Instance.GameSpeed);
+            _inputTimeout = new Timeout(Configuration.Instance.GameSpeed);
             _parser = new Parser();
            
             _renderTarget = new RenderTarget2D(_graphicsDevice, Configuration.Instance.CellWidth * Configuration.Instance.GridWidth, Configuration.Instance.CellHeight * Configuration.Instance.GridHeight);
@@ -49,12 +48,11 @@ namespace CeloIsYou
             _screen = new Rectangle(0, 0, (int)(Configuration.Instance.CellWidth * Configuration.Instance.GridWidth * Configuration.Instance.RenderFactor), (int)(Configuration.Instance.CellHeight * Configuration.Instance.GridHeight * Configuration.Instance.RenderFactor));
             _spriteBatch = new SpriteBatch(_graphicsDevice);
             _turns = new Stack<Stack<ICommand>>();
-
-            _pipelineDrawables = new PipelineDrawables(_spriteBatch);
-            _pipelineEntities = new PipelineEntities(_pipelineDrawables);
             
-            _doCommandsHandler = new DoCommandsHandler(_pipelineEntities, _resources, _grid);
-            _unDoCommandsHandler = new UnDoCommandsHandler(_pipelineEntities, _resources, _grid);
+            _pipeline = new PipelineEntities(_spriteBatch);
+            
+            _doCommandsHandler = new DoCommandsHandler(_pipeline, _resources, _grid);
+            _unDoCommandsHandler = new UnDoCommandsHandler(_pipeline, _resources, _grid);
         }
 
         private void Initialize(GameTime gameTime)
@@ -131,7 +129,7 @@ namespace CeloIsYou
             if (!controlledEntities.Contains(entity))
                 return false;
 
-            _pipelineEntities.Subscribe(new Sprite(entity.Position, _resources.GetAnimationSmoke()));
+            _pipeline.Subscribe(new Sprite(entity.Position, _resources.GetAnimationSmoke()));
 
             controlledEntities.Remove(entity);
             return MoveEntity(entity, direction, gameTime, controlledEntities);
@@ -229,7 +227,7 @@ namespace CeloIsYou
             _graphicsDevice.Clear(Color.Black);
 
             _spriteBatch.Begin();
-            _pipelineDrawables.Draw(gameTime);
+            _pipeline.Draw(gameTime);
             _spriteBatch.End();
 
             _graphicsDevice.SetRenderTarget(null);
@@ -246,9 +244,9 @@ namespace CeloIsYou
                 _initialized = true;
             }
 
-            if (!_inputDelayer.Update(gameTime))
+            if (!_inputTimeout.IsDone(gameTime))
             {
-                _pipelineEntities.Update(gameTime);
+                _pipeline.Update(gameTime);
                 return;
             }
 
@@ -266,7 +264,7 @@ namespace CeloIsYou
             if (Keyboard.GetState().GetPressedKeyCount() == 0)
                 Configuration.Instance.GameSpeed = 0.15;
             else
-                _inputDelayer = new Delay(gameTime, Configuration.Instance.GameSpeed);
+                _inputTimeout = new Timeout(gameTime, Configuration.Instance.GameSpeed);
 
             Direction direction = null;
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
@@ -286,7 +284,7 @@ namespace CeloIsYou
             if (direction != null)
                 Move(direction, gameTime);
 
-            _pipelineEntities.Update(gameTime);
+            _pipeline.Update(gameTime);
         }
 
         public void Dispose()

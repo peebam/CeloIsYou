@@ -7,10 +7,10 @@ namespace CeloIsYou
         public readonly int GridHeight = 16;
         public readonly int GridWidth = 26;
         
-
         public double GameSpeed { get; set; }
         public double RenderFactor { get; set; }
-        public static Configuration Instance = new Configuration();
+
+        public readonly static Configuration Instance = new Configuration();
 
         public Configuration()
         {

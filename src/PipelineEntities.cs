@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using CeloIsYou.Core;
@@ -11,15 +10,30 @@ namespace CeloIsYou
     public class PipelineEntities
     {
         private readonly List<IEntity> _entities;
+        
+        private readonly SpriteBatch _spriteBatch;
 
-        private readonly PipelineDrawables _pipelineDrawables;
-
-        public PipelineEntities(PipelineDrawables pipelineDrawables)
+        public PipelineEntities(SpriteBatch spriteBatch)
         {
             _entities = new List<IEntity>();
-            _pipelineDrawables = pipelineDrawables;
+            _spriteBatch = spriteBatch;
         }
 
+        public void Draw(GameTime gameTime)
+        {
+            var drawables = _entities.Where(d => d.Visible)
+                                     .OrderBy(d => d.DrawOrder);
+            
+            foreach (var drawable in drawables)
+                _spriteBatch.Draw(drawable.Texture, drawable.Position, Color.White);
+        }
+
+        public void Subscribe(IEntity entity)
+            => _entities.Add(entity);
+        
+        public void Unsubscribe(IEntity entity)
+            => _entities.Remove(entity);
+        
         public void Update(GameTime gameTime)
         {
             _entities.UpdateAll(gameTime);
@@ -27,18 +41,6 @@ namespace CeloIsYou
             var doneEntities = _entities.Where(e => e.IsDone).ToList();
             foreach (var entity in doneEntities)
                 Unsubscribe(entity);
-        }
-
-        public void Subscribe(IEntity entity)
-        {
-            _entities.Add(entity);
-            _pipelineDrawables.Subscribe(entity);
-        }
-
-        public void Unsubscribe(IEntity entity)
-        {
-            _entities.Remove(entity);
-            _pipelineDrawables.Unsubscribe(entity);
         }
     }
 }

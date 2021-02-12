@@ -37,7 +37,6 @@ namespace CeloIsYou
             {
                 _entities.Remove(entity);
             }
-
         }
 
         private static IReadOnlyList<Entity> EmptyList = new List<Entity>();

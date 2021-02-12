@@ -3,25 +3,25 @@ using Microsoft.Xna.Framework;
 
 namespace CeloIsYou
 {
-    public class Delay
+    public class Timeout
     {
         private readonly double _delay;
         private readonly double _start;
         public bool IsReached { get; private set; }
 
-        public Delay(double delay)
+        public Timeout(double delay)
         {
             _delay = delay;
             _start = 0;
         }
 
-        public Delay(GameTime gameTime, double delay)
+        public Timeout(GameTime gameTime, double delay)
         {
             _delay = delay;
             _start = gameTime.ToTotalGameTimeSeconds();
         }
 
-        public bool Update(GameTime gameTime)
+        public bool IsDone(GameTime gameTime)
         {
             var elapsedSeconds = gameTime.ToTotalGameTimeSeconds() - _start;
             IsReached = elapsedSeconds >= _delay;
