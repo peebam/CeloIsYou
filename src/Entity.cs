@@ -8,25 +8,22 @@ using CeloIsYou.Core;
 namespace CeloIsYou
 {
     public class Entity :  IEntity
-    {
-        private PositionInterpolator _animation;
-
-        public bool IsDone => false;
-
+    {   
+        private PositionInterpolator _positionInterpolator;
+        
         public bool IsControlled { get; set; }
+        public bool IsDone => false;
         public bool IsKilling { get; set; }
         public bool IsPushable { get; set; }
         public bool IsStoping { get; set; }
         public bool IsWeak { get; set; }
         public bool IsWin { get; set; }
-
-        public int DrawOrder { get; set; }
-
+        
         public Coordinates Coordinates { get; private set; }
+        public int DrawOrder { get; set; }
         public Vector2 Position { get; private set; }
         public Texture2D Texture { get; private set; }
-        public EntityTypes Type { get; set; }
-
+        public EntityTypes Type { get; private set; }
         public bool Visible { get; private set; }
 
         public Entity(EntityTypes type)
@@ -61,11 +58,11 @@ namespace CeloIsYou
 
         public void Update(GameTime gameTime)
         {
-            if (_animation != null)
+            if (_positionInterpolator != null)
             {
-                _animation.Update(gameTime);
-                if (_animation.IsDone)
-                    _animation = null;
+                _positionInterpolator.Update(gameTime);
+                if (_positionInterpolator.IsDone)
+                    _positionInterpolator = null;
             }
         }
 
@@ -77,7 +74,7 @@ namespace CeloIsYou
                 Position = position;
                 return;
             }
-            _animation = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.Current);
+            _positionInterpolator = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.Current);
         }
     }
 }
