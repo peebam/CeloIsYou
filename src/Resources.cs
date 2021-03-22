@@ -33,6 +33,15 @@ namespace CeloIsYou
             }, 0.1);
         }
 
+        public IAnimation GetAnimationSmokeFull()
+        {
+            return new BasicAnimation(new[] {
+                _pictures["Others/Smoke/Smoke_01"],
+                _pictures["Others/Smoke/Smoke_02"],
+                _pictures["Others/Smoke/Smoke_03"],
+                _pictures["Others/Smoke/Smoke_04"]
+            }, 0.1);
+        }
         public void Load()
         {
             foreach (var type in (EntityTypes[])Enum.GetValues(typeof(EntityTypes)))

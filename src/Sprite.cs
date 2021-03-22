@@ -6,7 +6,7 @@ namespace CeloIsYou
 {
     public class Sprite : IEntity
     {
-        public int DrawOrder => 0;
+        public int DrawOrder { get; }
 
         public Vector2 Position { get; }
 
@@ -19,8 +19,9 @@ namespace CeloIsYou
 
         private IAnimation _animation;
         
-        public Sprite(Vector2 position, IAnimation animation)
+        public Sprite(Vector2 position, IAnimation animation, int drawOrder = 0)
         {
+            DrawOrder = drawOrder;
             Position = position;
             _animation = animation;
         }

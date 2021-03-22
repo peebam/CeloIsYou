@@ -6,20 +6,20 @@ namespace CeloIsYou.Interpolator
     public class PositionInterpolator
     {
         private readonly double _animationLast;
-        private readonly Vector2 _fromPosition;
+        private readonly Vector2 _fromValue;
 
         private readonly double _initialGameTime;
-        private readonly Vector2 _toPosition;
+        private readonly Vector2 _toValue;
         private readonly Action<PositionInterpolator> _update;
-        public Vector2 CurrentPosition { get; private set; }
+        public Vector2 Current { get; private set; }
         public bool IsDone { get; private set; }
 
-        public PositionInterpolator(Vector2 fromPosition, Vector2 toPosition, double animationLast, GameTime gameTime, Action<PositionInterpolator> update)
+        public PositionInterpolator(Vector2 fromValue, Vector2 toValue, double animationLast, GameTime gameTime, Action<PositionInterpolator> update)
         {
             _animationLast = animationLast;
-            _fromPosition = fromPosition;
+            _fromValue = fromValue;
             _initialGameTime = gameTime?.TotalGameTime.TotalSeconds ?? throw new ArgumentNullException(nameof(gameTime));
-            _toPosition = toPosition;
+            _toValue = toValue;
             _update = update;
         }
 
@@ -30,7 +30,8 @@ namespace CeloIsYou.Interpolator
             
             var elapsedTime = currentGameTime.TotalGameTime.TotalSeconds - _initialGameTime;
             var interpolationPosition = (float)Math.Clamp(elapsedTime / _animationLast, 0d, 1d);
-            CurrentPosition = Vector2.Lerp(_fromPosition, _toPosition, interpolationPosition);
+
+            Current = Vector2.Lerp(_fromValue, _toValue, interpolationPosition);
 
             _update(this);
 

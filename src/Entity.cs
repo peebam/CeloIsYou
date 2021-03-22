@@ -77,7 +77,7 @@ namespace CeloIsYou
                 Position = position;
                 return;
             }
-            _animation = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.CurrentPosition);
+            _animation = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.Current);
         }
     }
 }

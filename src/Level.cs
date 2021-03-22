@@ -107,13 +107,12 @@ namespace CeloIsYou
         {
             var command = new EnterGameCommand(entity, to);
             _doCommandsHandler.Apply(command, gameTime);
+
+            _pipeline.Subscribe(new Sprite(to.ToPosition(), _resources.GetAnimationSmokeFull(), 99));
         }
 
         private void Move(Direction direction, GameTime gameTime)
         {
-            if (_turn != null)
-                return;
-
             _turn = new Stack<ICommand>();
 
             var controlledEntities = _grid.GetEntities().Where(e => e.IsControlled).ToList();
@@ -193,15 +192,17 @@ namespace CeloIsYou
             
             List<ICommand> commands = new List<ICommand>();
             var weakEntities = entities.Where(e => e.IsWeak);
+
             foreach(var weakEntity in weakEntities)
             {
-                
                 if (!_grid.HasEntities(weakEntity.Coordinates, e => e.IsKilling && e != weakEntity))
                     continue;
 
                 var command = new ExitGameCommand(weakEntity);
                 _doCommandsHandler.Apply(command, gameTime);
                 commands.Add(command);
+
+                _pipeline.Subscribe(new Sprite(weakEntity.Position, _resources.GetAnimationSmokeFull(), 99));
             }
 
             return result.Commands.Concat(commands).ToList();
@@ -214,11 +215,9 @@ namespace CeloIsYou
             var result = _parser.Process(expressions, entities);
 
             entities = _grid.GetEntities();
-            foreach (var entity in entities)
-                entity.ClearStates();
 
-            foreach (var rule in result.Rules)
-                rule.Apply(entities);
+            entities.ClearStatesAll();
+            result.Rules.ApplyAll(entities);
         }
 
         public void Draw(GameTime gameTime)
