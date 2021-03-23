@@ -8,7 +8,9 @@ using CeloIsYou.Core;
 namespace CeloIsYou
 {
     public class Entity :  IEntity
-    {   
+    {
+        private IAnimation _animation;
+
         private PositionInterpolator _positionInterpolator;
         
         public bool IsControlled { get; set; }
@@ -22,7 +24,7 @@ namespace CeloIsYou
         public Coordinates Coordinates { get; private set; }
         public int DrawOrder { get; set; }
         public Vector2 Position { get; private set; }
-        public Texture2D Texture { get; private set; }
+        public Texture2D Texture => _animation.Texture;
         public EntityTypes Type { get; private set; }
         public bool Visible { get; private set; }
 
@@ -51,9 +53,9 @@ namespace CeloIsYou
             SetPosition(coordinates.ToPosition(), gameTime);
         }
 
-        public void SetTexture(Texture2D texture)
+        public void SetAnimation(IAnimation animation)
         {
-            Texture = texture;
+            _animation = animation;
         }
 
         public void Update(GameTime gameTime)

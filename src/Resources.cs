@@ -1,8 +1,6 @@
-
-
-
 using System;
 using System.Collections.Generic;
+using CeloIsYou.Animation;
 using CeloIsYou.Core;
 using CeloIsYou.Enumerations;
 using CeloIsYou.Extensions;
@@ -21,8 +19,8 @@ namespace CeloIsYou
             _pictures = new Dictionary<string, Texture2D>();
         }
 
-        public Texture2D GetTexture(string name)
-            => _pictures[name];
+        public IAnimation GetAnimation(string name)
+            => new OneFrameAnimation(_pictures[name]);
 
         public IAnimation GetAnimationSmoke()
         {
