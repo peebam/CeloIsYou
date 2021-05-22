@@ -34,7 +34,7 @@ namespace CeloIsYou.Handlers
         {
             _grid.Enter(command.Entity, command.Coordinates);
             command.Entity.SetCoordinates(command.Coordinates, gameTime);
-            command.Entity.SetAnimation(_resources.GetAnimation(command.Entity.Type.ToContentName()));
+            command.Entity.Appears();
             _pipeline.Subscribe(command.Entity);
         }
 

@@ -4,6 +4,7 @@ using CeloIsYou.Enumerations;
 using CeloIsYou.Extensions;
 using CeloIsYou.Handlers;
 using CeloIsYou.Rules;
+using CeloIsYou.src.Enumerations;
 using CeloIsYou.src.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -27,7 +28,7 @@ namespace CeloIsYou
         private readonly Rectangle _screen;
         private readonly SpriteBatch _spriteBatch;
 
-        private Stack<ICommand> _turn;
+        private Stack<ICommand> _currentTurn;
         private readonly Stack<Stack<ICommand>> _turns;
 
         private readonly ICommandsHandler _doCommandsHandler;
@@ -41,7 +42,7 @@ namespace CeloIsYou
             _graphicsDevice = graphicsDevice;
             _grid = new Grid(Configuration.Instance.GridWidth, Configuration.Instance.GridHeight);
             _inputTimeout = new Timeout(Configuration.Instance.GameSpeed);
-            _parser = new Parser();
+            _parser = new Parser(resources);
            
             _renderTarget = new RenderTarget2D(_graphicsDevice, Configuration.Instance.CellWidth * Configuration.Instance.GridWidth, Configuration.Instance.CellHeight * Configuration.Instance.GridHeight);
             _resources = resources;
@@ -55,50 +56,53 @@ namespace CeloIsYou
             _unDoCommandsHandler = new UnDoCommandsHandler(_pipeline, _resources, _grid);
         }
 
+        private bool IsMoveAllowed()
+            => _grid.GetEntities().All(e => e.State == EntityStates.Idle);
+
         private void Initialize(GameTime gameTime)
         {
-            InitializeEntity(new Entity(EntityTypes.NatureText), new Coordinates(10, 0), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(11, 0), gameTime);
-            InitializeEntity(new Entity(EntityTypes.StatePush), new Coordinates(12, 0), gameTime);
-            InitializeEntity(new Entity(EntityTypes.StateStop), new Coordinates(13, 5), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureText), new Coordinates(10, 0), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(11, 0), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.StatePush), new Coordinates(12, 0), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.StateStop), new Coordinates(13, 5), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(6, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(7, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.NatureRock), new Coordinates(8, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(9, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(10, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureWall), new Coordinates(6, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(7, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureRock), new Coordinates(8, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(9, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureWall), new Coordinates(10, 1), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(5, 3), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureCelo), new Coordinates(5, 3), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(8, 2), gameTime);
-            InitializeEntity(new Entity(EntityTypes.StatePush), new Coordinates(8, 3), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(8, 2), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.StatePush), new Coordinates(8, 3), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(20, 2), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(21, 2), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ActionYou), new Coordinates(22, 2), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureCelo), new Coordinates(20, 2), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(21, 2), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ActionYou), new Coordinates(22, 2), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.NatureCelo), new Coordinates(20, 3), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(21, 3), gameTime);
-            InitializeEntity(new Entity(EntityTypes.StateWeak), new Coordinates(22, 3), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureCelo), new Coordinates(20, 3), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(21, 3), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.StateWeak), new Coordinates(22, 3), gameTime);
 
 
-            InitializeEntity(new Entity(EntityTypes.NatureWall), new Coordinates(1, 12), gameTime);
-            InitializeEntity(new Entity(EntityTypes.VerbIs), new Coordinates(2, 12), gameTime);
-            InitializeEntity(new Entity(EntityTypes.StateKill), new Coordinates(3, 12), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.NatureWall), new Coordinates(1, 12), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.VerbIs), new Coordinates(2, 12), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.StateKill), new Coordinates(3, 12), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.ObjectSpot), new Coordinates(7, 7), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectSpot), new Coordinates(8, 8), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectSpot), new Coordinates(1, 1), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectWall), new Coordinates(5, 5), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectWall), new Coordinates(5, 6), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectWall), new Coordinates(5, 7), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectWall), new Coordinates(5, 8), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectWall), new Coordinates(5, 9), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectBox), new Coordinates(13, 12), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectBox), new Coordinates(14, 13), gameTime);
-            InitializeEntity(new Entity(EntityTypes.ObjectBox), new Coordinates(14, 14), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectSpot), new Coordinates(7, 7), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectSpot), new Coordinates(8, 8), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectSpot), new Coordinates(1, 1), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectWall), new Coordinates(5, 5), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectWall), new Coordinates(5, 6), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectWall), new Coordinates(5, 7), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectWall), new Coordinates(5, 8), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectWall), new Coordinates(5, 9), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectBox), new Coordinates(13, 12), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectBox), new Coordinates(14, 13), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectBox), new Coordinates(14, 14), gameTime);
 
-            InitializeEntity(new Entity(EntityTypes.ObjectCelo), new Coordinates(0, 0), gameTime);
+            InitializeEntity(new Entity(_resources, EntityTypes.ObjectCelo), new Coordinates(0, 0), gameTime);
 
             UpdateRules(gameTime);
         }
@@ -107,13 +111,11 @@ namespace CeloIsYou
         {
             var command = new EnterGameCommand(entity, to);
             _doCommandsHandler.Apply(command, gameTime);
-
-            _pipeline.Subscribe(new Sprite(to.ToPosition(), _resources.GetAnimationSmokeFull(), 99));
         }
 
         private void Move(Direction direction, GameTime gameTime)
         {
-            _turn = new Stack<ICommand>();
+            _currentTurn = new Stack<ICommand>();
 
             var controlledEntities = _grid.GetEntities().Where(e => e.IsControlled).ToList();
             while (controlledEntities.Any())
@@ -128,7 +130,7 @@ namespace CeloIsYou
             if (!controlledEntities.Contains(entity))
                 return false;
 
-            _pipeline.Subscribe(new Sprite(entity.Position, _resources.GetAnimationSmoke()));
+            _pipeline.Subscribe(new Sprite(entity.Position, _resources.GetAnimationSmoke(0.08f)));
 
             controlledEntities.Remove(entity);
             return MoveEntity(entity, direction, gameTime, controlledEntities);
@@ -157,7 +159,7 @@ namespace CeloIsYou
                 return false;
 
             var command = new MoveInGridCommand(entity, nextCellCoordinates);
-            _turn.Push(command);
+            _currentTurn.Push(command);
             _doCommandsHandler.Apply(command, gameTime);
             return true;
         }
@@ -202,7 +204,7 @@ namespace CeloIsYou
                 _doCommandsHandler.Apply(command, gameTime);
                 commands.Add(command);
 
-                _pipeline.Subscribe(new Sprite(weakEntity.Position, _resources.GetAnimationSmokeFull(), 99));
+                _pipeline.Subscribe(new Sprite(weakEntity.Position, _resources.GetAnimationSmoke(0.04f), 99));
             }
 
             return result.Commands.Concat(commands).ToList();
@@ -243,28 +245,26 @@ namespace CeloIsYou
                 _initialized = true;
             }
 
-            if (!_inputTimeout.IsDone(gameTime))
+            if (!IsMoveAllowed())
             {
                 _pipeline.Update(gameTime);
                 return;
             }
-
-            if (_turn != null)
+                  
+            if (_currentTurn != null)
             {
                 var commands = UpdateRules(gameTime);
-                _turn.PushAll(commands);
+                _currentTurn.PushAll(commands);
 
-                if (_turn.Any())
-                    _turns.Push(_turn);
+                if (_currentTurn.Any())
+                    _turns.Push(_currentTurn);
 
-                _turn = null;
+                _currentTurn = null;
             }
 
             if (Keyboard.GetState().GetPressedKeyCount() == 0)
                 Configuration.Instance.GameSpeed = 0.15;
-            else
-                _inputTimeout = new Timeout(gameTime, Configuration.Instance.GameSpeed);
-
+            
             Direction direction = null;
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
                 direction = Direction.Up;

@@ -22,28 +22,21 @@ namespace CeloIsYou
         public IAnimation GetAnimation(string name)
             => new OneFrameAnimation(_pictures[name]);
 
-        public IAnimation GetAnimationSmoke()
-        {
-            return new BasicAnimation(new[] {
-                _pictures["Others/Smoke/Smoke_02"],
-                _pictures["Others/Smoke/Smoke_03"],
-                _pictures["Others/Smoke/Smoke_04"]
-            }, 0.1);
-        }
-
-        public IAnimation GetAnimationSmokeFull()
+        public IAnimation GetAnimationSmoke(float frameLast)
         {
             return new BasicAnimation(new[] {
                 _pictures["Others/Smoke/Smoke_01"],
                 _pictures["Others/Smoke/Smoke_02"],
                 _pictures["Others/Smoke/Smoke_03"],
                 _pictures["Others/Smoke/Smoke_04"]
-            }, 0.1);
+            }, frameLast);
         }
+        
         public void Load()
         {
             foreach (var type in (EntityTypes[])Enum.GetValues(typeof(EntityTypes)))
             {
+               
                 var contentName = type.ToContentName();
                 var picture = _contentManager.Load<Texture2D>(contentName);
                 _pictures[contentName] = picture;

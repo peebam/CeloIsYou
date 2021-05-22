@@ -36,8 +36,11 @@ namespace CeloIsYou.Rules
             [EntityTypes.NatureSpot] = EntityTypes.ObjectSpot,
         };
 
-        public Parser()
+        private Resources _resources;
+
+        public Parser(Resources resources)
         {
+            _resources = resources ?? throw new ArgumentNullException(nameof(resources));
         }
 
         public Result Process(IEnumerable<Expression> expressions, IEnumerable<Entity> entities)
@@ -88,7 +91,7 @@ namespace CeloIsYou.Rules
                     foreach(var expression in group)
                     {
                         var newType = _types[expression.Object];
-                        var newEntity = new Entity(newType);
+                        var newEntity = new Entity(_resources, newType);
                         var commandEnter = new EnterGameCommand(newEntity, entity.Coordinates);
                         commands.Add(commandEnter);
                     }

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using CeloIsYou.Extensions;
 using CeloIsYou.Core;
+using CeloIsYou.src.Enumerations;
 
 namespace CeloIsYou
 {
@@ -12,7 +13,9 @@ namespace CeloIsYou
         private IAnimation _animation;
 
         private PositionInterpolator _positionInterpolator;
-        
+
+        private Resources _resources;
+
         public bool IsControlled { get; set; }
         public bool IsDone => false;
         public bool IsKilling { get; set; }
@@ -25,12 +28,22 @@ namespace CeloIsYou
         public int DrawOrder { get; set; }
         public Vector2 Position { get; private set; }
         public Texture2D Texture => _animation.Texture;
+        public EntityStates State { get; private set; }
         public EntityTypes Type { get; private set; }
         public bool Visible { get; private set; }
 
-        public Entity(EntityTypes type)
+        public Entity(Resources resources, EntityTypes type)
         {
+            _resources = resources;
+            State = EntityStates.Idle;
             Type = type;
+            SetDefaultAnimation();
+        }
+
+        public void Appears()
+        {
+            State = EntityStates.Appearing;
+            _animation = _resources.GetAnimationSmoke(0.04f);
         }
 
         public void ClearPosition()
@@ -53,30 +66,44 @@ namespace CeloIsYou
             SetPosition(coordinates.ToPosition(), gameTime);
         }
 
-        public void SetAnimation(IAnimation animation)
-        {
-            _animation = animation;
-        }
-
         public void Update(GameTime gameTime)
         {
             if (_positionInterpolator != null)
             {
                 _positionInterpolator.Update(gameTime);
                 if (_positionInterpolator.IsDone)
+                {
                     _positionInterpolator = null;
+                    State = EntityStates.Idle;
+                }
+            }
+
+            _animation.Update(gameTime);
+            if (State == EntityStates.Appearing && _animation.IsDone)
+            {
+                SetDefaultAnimation();
+                State = EntityStates.Idle;
             }
         }
 
         private void SetPosition(Vector2 position, GameTime gameTime)
         {
+            if (State != EntityStates.Idle)
+                return;
+
             if (!Visible)
             {
                 Visible = true;
                 Position = position;
                 return;
             }
+
+            State = EntityStates.Moving;
             _positionInterpolator = new PositionInterpolator(Position, position, Configuration.Instance.GameSpeed, gameTime, pa => Position = pa.Current);
         }
+
+        private void SetDefaultAnimation()
+            => _animation = _resources.GetAnimation(Type.ToContentName());
+        
     }
 }
